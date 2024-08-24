@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Info: 
 #    McAfee Sitelist.xml password decryption tool
 #    Jerome Nokin (@funoverip) - Feb 2016
@@ -22,8 +22,7 @@ KEY = bytearray.fromhex("12150F10111C1A060A1F1B1817160519").decode("utf-8")
 def sitelist_xor(xs):
     result = bytearray(0)
     for i, c in enumerate(xs):
-        cb = c.to_bytes(1, byteorder="big")
-        result += (ord(cb) ^ ord(KEY[i%16])).to_bytes(1, byteorder="big")
+        result += (c ^ ord(KEY[i % 16])).to_bytes(1, byteorder="big")
     return result
 
 def des3_ecb_decrypt(data):
@@ -33,7 +32,7 @@ def des3_ecb_decrypt(data):
     des3 = DES3.new(key, DES3.MODE_ECB)
     data += bytearray(64 - (len(data) % 64))
     decrypted = des3.decrypt(data)
-    return decrypted[0:decrypted.find(0)] or "<empty>"
+    return decrypted[:decrypted.find(b'\x00')] or b"<empty>"
 
 if __name__ == "__main__":
 
@@ -43,7 +42,7 @@ if __name__ == "__main__":
         sys.exit(0)
 
     # read arg
-    encrypted_password = base64.b64decode(bytes(sys.argv[1], "utf-8"))
+    encrypted_password = base64.b64decode(sys.argv[1])
     # decrypt
     passwdXOR = sitelist_xor(encrypted_password)
     password = des3_ecb_decrypt(passwdXOR).decode("utf-8")
